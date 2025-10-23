@@ -97,9 +97,7 @@ export async function sendResetPasswordOtp(to: string, otp: string) {
   const { user, pass, host } = validateEmailConfig();
 
   const transporter = nodemailer.createTransport({
-    host,
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
       user,
       pass,
