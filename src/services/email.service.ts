@@ -31,9 +31,7 @@ function validateEmailConfig() {
 
 function createTransporter() {
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
       user: config.email.user,
       pass: config.email.pass,
