@@ -28,24 +28,52 @@ export class AuthService {
     }
   }
 
+  // async signup(email: string, password: string) {
+  //   const existing = await User.findOne({ email });
+  //   if (existing) {
+  //     throw new HttpError("Email already in use", 400);
+  //   }
+
+  //   let newUser;
+
+  //   try {
+  //     newUser = await User.create({ email, password });
+  //     await this.createAndSendOtp(email);
+  //   } catch (error) {
+  //     await User.deleteOne({ email });
+  //     await OtpModel.deleteMany({ email });
+  //     throw new HttpError("Failed to create user", 500);
+  //   }
+
+  //   return { newUser };
+  // }
+
   async signup(email: string, password: string) {
     const existing = await User.findOne({ email });
     if (existing) {
       throw new HttpError("Email already in use", 400);
     }
 
-    let newUser;
-
     try {
-      newUser = await User.create({ email, password });
-      await this.createAndSendOtp(email);
-    } catch (error) {
-      await User.deleteOne({ email });
-      await OtpModel.deleteMany({ email });
-      throw new HttpError("Failed to create user", 500);
-    }
+      // Create OTP before creating user in database
+      const otpRecord = await this.createOtpRecord(email);
 
-    return { newUser };
+      // Try sending OTP email before user creation
+      await sendOtpEmail(email, otpRecord.otp);
+
+      // Only create user AFTER successful email sending
+      const newUser = await User.create({
+        email,
+        password,
+        isVerified: false,
+      });
+
+      return { newUser };
+    } catch (error) {
+      //Rollback OTP if email sending fails
+      await OtpModel.deleteMany({ email });
+      throw new HttpError("Failed to send OTP email. Please try again.", 500);
+    }
   }
 
   async verifyOtp(email: string, otp: string) {
@@ -333,6 +361,27 @@ export class AuthService {
       await User.deleteOne({ email });
       await OtpModel.deleteMany({ email });
       throw new HttpError(`Failed to send OTP email`, 500);
+    }
+  }
+
+  private async createOtpRecord(email: string) {
+    try {
+      await OtpModel.deleteMany({ email });
+
+      const otpCode = generateAlphaNumericOTP();
+      const otpRecord = await OtpModel.create({
+        email,
+        otp: otpCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes expiry
+      });
+
+      if (!otpRecord) {
+        throw new HttpError(`Failed to create OTP`, 400);
+      }
+
+      return otpRecord;
+    } catch {
+      throw new HttpError(`Failed to create OTP`, 500);
     }
   }
 }
