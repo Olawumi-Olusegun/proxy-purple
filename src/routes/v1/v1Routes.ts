@@ -7,6 +7,7 @@ import {
 } from "../../validators/auth.validators";
 import * as authController from "../../controllers/auth.controller";
 import * as adminController from "../../controllers/admin.controller";
+import * as usersController from "../../controllers/users.controller";
 import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 
 const v1Routes = express.Router();
@@ -28,6 +29,27 @@ v1Routes.post(
 );
 
 v1Routes.post("/reset-password", authController.resetPassword);
+
+v1Routes.get(
+  "/users",
+  authMiddleware,
+  authorize("admin", "user"),
+  usersController.getUsers
+);
+
+v1Routes
+  .get(
+    "/user/profile",
+    authMiddleware,
+    authorize("admin", "user"),
+    usersController.myProfile
+  )
+  .put(
+    "/user/profile/update",
+    authMiddleware,
+    authorize("admin", "user"),
+    usersController.UpdateMyProfile
+  );
 
 // Admin Routes
 v1Routes.get(
