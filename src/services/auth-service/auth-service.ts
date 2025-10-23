@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { AuthToken } from "../../models/auth-token.model";
 import { verifyGoogleIdToken } from "../google.service";
 import OtpModel from "../../models/otp.model";
-import { sendOtpEmail } from "../email.service";
+import { sendOtpEmailWithResend } from "../email.service";
 import { generateAlphaNumericOTP } from "../../utils/generateOTP";
 import { HttpError } from "../../utils/http-error";
 
@@ -59,7 +59,7 @@ export class AuthService {
       const otpRecord = await this.createOtpRecord(email);
 
       // Try sending OTP email before user creation
-      await sendOtpEmail(email, otpRecord.otp);
+      await sendOtpEmailWithResend(email, otpRecord.otp);
 
       // Only create user AFTER successful email sending
       const newUser = await User.create({
@@ -72,6 +72,7 @@ export class AuthService {
     } catch (error) {
       //Rollback OTP if email sending fails
       await OtpModel.deleteMany({ email });
+      await User.deleteOne({ email });
       throw new HttpError("Failed to send OTP email. Please try again.", 500);
     }
   }
@@ -356,7 +357,7 @@ export class AuthService {
       });
 
       // Send the OTP via email
-      await sendOtpEmail(email, otpCode);
+      await sendOtpEmailWithResend(email, otpCode);
     } catch {
       await User.deleteOne({ email });
       await OtpModel.deleteMany({ email });

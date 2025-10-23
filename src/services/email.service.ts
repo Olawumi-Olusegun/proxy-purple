@@ -1,5 +1,8 @@
 import nodemailer from "nodemailer";
 import config from "../config";
+import { Resend } from "resend";
+
+const resend = new Resend(config.resendEmailApiKey);
 
 function validateEmailConfig() {
   if (!config.email.user?.trim()) {
@@ -135,5 +138,29 @@ export async function sendResetPasswordOtp(to: string, otp: string) {
     throw error;
   } finally {
     transporter.close();
+  }
+}
+
+export async function sendOtpEmailWithResend(to: string, otp: string) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "ProxyPurple <onboarding@resend.dev>",
+      to,
+      subject: "Your OTP Code",
+      html: `
+        <div style="font-family:Arial, sans-serif;line-height:1.5">
+          <h2>Verify your email</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing:4px">${otp}</h1>
+          <p>It expires in 10 minutes. Don't share it.</p>
+        </div>
+      `,
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("Email send failed:", err);
+    throw new Error("Email sending failed");
   }
 }

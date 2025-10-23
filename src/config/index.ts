@@ -19,5 +19,6 @@ export default {
     pass: process.env.EMAIL_PASS,
   },
   googleClientId: process.env.GOOGLE_CLIENT_ID,
+  resendEmailApiKey: process.env.RESEND_EMAIL_API_KEY,
   isDevelopment: process.env.NODE_ENV !== "production",
 };
