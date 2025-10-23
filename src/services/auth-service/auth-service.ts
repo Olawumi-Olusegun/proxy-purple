@@ -34,9 +34,16 @@ export class AuthService {
       throw new HttpError("Email already in use", 400);
     }
 
-    const newUser = await User.create({ email, password });
+    let newUser;
 
-    await this.createAndSendOtp(email);
+    try {
+      newUser = await User.create({ email, password });
+      await this.createAndSendOtp(email);
+    } catch (error) {
+      await User.deleteOne({ email });
+      await OtpModel.deleteMany({ email });
+      throw new HttpError("Failed to create user", 500);
+    }
 
     return { newUser };
   }
