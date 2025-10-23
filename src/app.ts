@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.middleware";
@@ -10,6 +11,12 @@ import axios from "axios";
 const app = express();
 
 app.disable("x-powered-by");
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
