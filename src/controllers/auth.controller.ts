@@ -43,6 +43,8 @@ interface UserResponse {
     addressLine1: string;
     addressLine2: string;
     postalCode: string;
+    role?: string;
+    isVerified?: boolean;
   };
 }
 
@@ -61,6 +63,8 @@ function createUserResponse(user: any, message?: string): UserResponse {
       addressLine1: user.addressLine1 ?? "",
       addressLine2: user.addressLine2 ?? "",
       postalCode: user.postalCode ?? "",
+      role: user.role,
+      isVerified: user.isVerified,
     },
   };
 }

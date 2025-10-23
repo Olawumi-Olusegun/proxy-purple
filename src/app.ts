@@ -29,7 +29,9 @@ const globalLimiter = createRateLimiter({
 });
 
 app.use(globalLimiter);
-app.get("/health", (req, res) => res.json({ ok: true }));
+app.get("/health", async (_req, res) => {
+  return res.json({ ok: true });
+});
 app.use("/api", apiRoutes);
 
 app.use(errorMiddleware);
