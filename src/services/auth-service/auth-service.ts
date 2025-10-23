@@ -8,6 +8,8 @@ import OtpModel from "../../models/otp.model";
 import { sendOtpEmailWithResend } from "../email.service";
 import { generateAlphaNumericOTP } from "../../utils/generateOTP";
 import { HttpError } from "../../utils/http-error";
+import config from "../../config";
+import { CreateAndSaveAuthTokenToDatabase } from "../../utils/auth-token-utils";
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -17,36 +19,16 @@ export class AuthService {
   private readonly jwtBycryptRounds: number;
 
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || "secret";
-    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || "refreshSecret";
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1h";
-    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+    this.jwtSecret = config.jwt.JWT_ACCESS_SECRET || "secret";
+    this.jwtRefreshSecret = config.jwt.JWT_REFRESH_SECRET || "refreshSecret";
+    this.jwtExpiresIn = config.jwt.JWT_ACCESS_EXPIRES || "1h";
+    this.jwtRefreshExpiresIn = config.jwt.JWT_REFRESH_EXPIRES || "7d";
     this.jwtBycryptRounds = parseInt(process.env.JWT_BYCRPYT_ROUNDS || "10");
 
     if (!this.jwtSecret || !this.jwtRefreshSecret) {
       throw new Error("JWT_SECRET are not defined in environmental file");
     }
   }
-
-  // async signup(email: string, password: string) {
-  //   const existing = await User.findOne({ email });
-  //   if (existing) {
-  //     throw new HttpError("Email already in use", 400);
-  //   }
-
-  //   let newUser;
-
-  //   try {
-  //     newUser = await User.create({ email, password });
-  //     await this.createAndSendOtp(email);
-  //   } catch (error) {
-  //     await User.deleteOne({ email });
-  //     await OtpModel.deleteMany({ email });
-  //     throw new HttpError("Failed to create user", 500);
-  //   }
-
-  //   return { newUser };
-  // }
 
   async signup(email: string, password: string) {
     const existing = await User.findOne({ email });
@@ -110,10 +92,12 @@ export class AuthService {
       // Delete all OTPs for this user (cleanup)
       await OtpModel.deleteMany({ email });
 
-      const { accessToken, refreshToken } = await this.generateToken(
-        updatedUser._id,
-        updatedUser.email
-      );
+      const { accessToken, refreshToken } =
+        await CreateAndSaveAuthTokenToDatabase(
+          updatedUser._id,
+          updatedUser.email
+        );
+
       return {
         user: updatedUser,
         accessToken,
@@ -164,10 +148,8 @@ export class AuthService {
       throw new HttpError("Invalid credentials", 401);
     }
 
-    const { accessToken, refreshToken } = await this.generateToken(
-      userExist.id,
-      userExist.email
-    );
+    const { accessToken, refreshToken } =
+      await CreateAndSaveAuthTokenToDatabase(userExist.id, userExist.email);
 
     return {
       userExist,
@@ -200,10 +182,8 @@ export class AuthService {
     if (!user) throw new HttpError("User not found", 404);
 
     // Rotate tokens
-    const { accessToken, refreshToken } = await this.generateToken(
-      user.id,
-      user.email
-    );
+    const { accessToken, refreshToken } =
+      await CreateAndSaveAuthTokenToDatabase(user.id, user.email);
 
     // Delete old token (rotation)
     await AuthToken.deleteOne({ _id: existing._id });
@@ -237,10 +217,8 @@ export class AuthService {
       await userExist.save();
     }
 
-    const { accessToken, refreshToken } = await this.generateToken(
-      userExist.id,
-      userExist.email
-    );
+    const { accessToken, refreshToken } =
+      await CreateAndSaveAuthTokenToDatabase(userExist.id, userExist.email);
 
     return {
       accessToken,
@@ -300,10 +278,8 @@ export class AuthService {
     user.password = newPassword;
     await user.save();
 
-    const { accessToken, refreshToken } = await this.generateToken(
-      user.id,
-      user.email
-    );
+    const { accessToken, refreshToken } =
+      await CreateAndSaveAuthTokenToDatabase(user.id, user.email);
 
     return {
       user,
@@ -312,39 +288,7 @@ export class AuthService {
     };
   }
 
-  private async generateToken(userId: string, email: string) {
-    const accessTokenOptions = {
-      expiresIn: this.jwtExpiresIn as StringValue,
-    };
-
-    const accessToken = jwt.sign(
-      { userId, email },
-      this.jwtSecret,
-      accessTokenOptions
-    );
-
-    const refreshTokenOptions = {
-      expiresIn: this.jwtRefreshExpiresIn as StringValue,
-    };
-
-    const refreshToken = jwt.sign(
-      { userId, email },
-      this.jwtSecret,
-      refreshTokenOptions
-    );
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await AuthToken.create({
-      userId,
-      token: refreshToken,
-      expiresAt,
-    });
-
-    return { accessToken, refreshToken };
-  }
-
+  // SEND OTP
   private async createAndSendOtp(email: string) {
     try {
       await OtpModel.deleteMany({ email });
@@ -365,6 +309,7 @@ export class AuthService {
     }
   }
 
+  // CREATE OTP RECORD IN DATABASE
   private async createOtpRecord(email: string) {
     try {
       await OtpModel.deleteMany({ email });

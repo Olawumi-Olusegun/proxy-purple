@@ -6,6 +6,8 @@ import {
   verifyOTPSchema,
 } from "../../validators/auth.validators";
 import * as authController from "../../controllers/auth.controller";
+import * as adminController from "../../controllers/admin.controller";
+import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 
 const v1Routes = express.Router();
 
@@ -26,5 +28,13 @@ v1Routes.post(
 );
 
 v1Routes.post("/reset-password", authController.resetPassword);
+
+// Admin Routes
+v1Routes.get(
+  "/admin",
+  authMiddleware,
+  authorize("admin"),
+  adminController.getAdmin
+);
 
 export default v1Routes;
