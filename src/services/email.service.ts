@@ -55,16 +55,19 @@ export async function sendResetPasswordEmail(to: string, token: string) {
 }
 
 export async function sendOtpEmail(to: string, otp: string) {
-  const { user, pass, host } = validateEmailConfig();
+  const { user, pass } = validateEmailConfig();
+
+  if (!to) {
+    throw new Error("User's email address required");
+  }
 
   const transporter = nodemailer.createTransport({
-    host,
-    port: 587,
-    secure: false,
-    auth: {
-      user,
-      pass,
+    service: "gmail",
+    auth: { user, pass },
+    tls: {
+      rejectUnauthorized: false, // Allows unverified SSL certificates
     },
+    debug: config.isDevelopment,
   });
 
   try {
@@ -96,9 +99,17 @@ export async function sendOtpEmail(to: string, otp: string) {
 export async function sendResetPasswordOtp(to: string, otp: string) {
   const { user, pass } = validateEmailConfig();
 
+  if (!to) {
+    throw new Error("User's email address required");
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user, pass },
+    tls: {
+      rejectUnauthorized: false, // Allows unverified SSL certificates
+    },
+    debug: config.isDevelopment,
   });
 
   const mailOptions = {
