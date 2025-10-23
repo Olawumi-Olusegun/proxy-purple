@@ -10,6 +10,7 @@ export default {
     refreshExpires: process.env.JWT_REFRESH_EXPIRES || "7d",
   },
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  appUrl: process.env.APP_URL || "http://localhost:4000",
   email: {
     host: process.env.SMTP_HOST,
     service: process.env.SMTP_SERVICE,

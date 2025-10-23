@@ -7,6 +7,7 @@ import apiRoutes from "./routes";
 import { createRateLimiter } from "./middlewares/rate-limit.middleware";
 import cron from "node-cron";
 import axios from "axios";
+import config from "./config";
 
 const app = express();
 
@@ -37,8 +38,7 @@ app.use(errorMiddleware);
 // This cron job is setup in other to bypass the idle time when deployed on render free hosting
 cron.schedule("*/4 * * * *", async () => {
   try {
-    const baseUrl = process.env.APP_URL || "http://localhost:4000";
-    const response = await axios.get(`${baseUrl}/health`);
+    const response = await axios.get(`${config.appUrl}/health`);
     console.log(
       `[CRON] Health check successful at ${new Date().toISOString()}`,
       response.data
