@@ -1,14 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { randomTokenString, hashToken } from "../utils/crypto.util";
-import {
-  sendResetPasswordEmail,
-  sendResetPasswordOtp,
-} from "../services/email.service";
+import { sendResetPasswordOtp } from "../services/email.service";
 import { User } from "../models/user.model";
 import { AuthService } from "../services/auth-service/auth-service";
-import { ResetPasswordToken } from "../models/reset-password.model";
 import { generateAlphaNumericOTP } from "../utils/generateOTP";
 import OtpModel from "../models/otp.model";
+import { AuthRequest } from "../types/type";
 
 // Helper type for typed request bodies
 type RequestWithBody<T> = Request & { body: T };
@@ -82,10 +78,9 @@ export async function googleAuth(
     }
 
     const user = await authService.googleAuth(idToken);
-
     res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
     res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(201).json(createUserResponse(user.userExist));
+    res.status(201).json(createUserResponse(user.user));
   } catch (err) {
     next(err);
   }
@@ -149,7 +144,7 @@ export async function signin(
 
     res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
     res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(200).json(createUserResponse(user.userExist));
+    res.status(200).json(createUserResponse(user.user));
   } catch (err) {
     next(err);
   }
@@ -181,13 +176,12 @@ export async function refreshToken(
     res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.json({ accessToken });
   } catch (err) {
-    console.error(err);
     next(err);
   }
 }
 
-export async function verifyLogin(req: Request, res: Response) {
-  const user = (req as any).user;
+export async function verifyLogin(req: AuthRequest, res: Response) {
+  const user = req.user;
   res.json({ ok: true, user });
 }
 
@@ -204,20 +198,25 @@ export async function forgotPassword(
       return res.json({ success: false, message: "User not found" });
     }
 
-    await OtpModel.deleteMany({ email });
-
     const otpCode = generateAlphaNumericOTP();
 
-    await OtpModel.create({
+    const deleteOtpPromise = OtpModel.deleteMany({ email });
+    const createOtpPromise = OtpModel.create({
       email,
       otp: otpCode,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes expiry
     });
 
+    await Promise.all([deleteOtpPromise, createOtpPromise]);
+
     try {
       await sendResetPasswordOtp(email, otpCode);
     } catch (emailErr) {
       console.error("Failed to send reset email", emailErr);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send reset email. Please try again.",
+      });
     }
 
     res.json({

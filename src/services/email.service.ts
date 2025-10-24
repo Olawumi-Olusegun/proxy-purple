@@ -1,24 +1,25 @@
 import nodemailer from "nodemailer";
 import config from "../config";
 import { Resend } from "resend";
+import { HttpError } from "../utils/http-error";
 
-const resend = new Resend(config.resendEmailApiKey);
+const resend = new Resend(config.RESEND_EMAIL_API_KEY);
 
 function validateEmailConfig() {
-  if (!config.email.user?.trim()) {
+  if (!config.email.EMAIL_USER?.trim()) {
     throw new Error("EMAIL_USER is not defined in config");
   }
 
-  if (!config.email.pass?.trim()) {
+  if (!config.email.EMAIL_PASS?.trim()) {
     throw new Error("EMAIL_PASS is not defined in config");
   }
 
-  if (!config.email.host?.trim()) {
+  if (!config.email.SMTP_HOST?.trim()) {
     throw new Error("EMAIL_PASS is not defined in config");
   }
 
   // Trim and validate email format
-  const email = config.email.user.trim();
+  const email = config.email.EMAIL_USER.trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
@@ -27,8 +28,8 @@ function validateEmailConfig() {
 
   return {
     user: email,
-    pass: config.email.pass,
-    host: config.email.host,
+    pass: config.email.EMAIL_PASS,
+    host: config.email.SMTP_HOST,
   };
 }
 
@@ -36,8 +37,8 @@ function createTransporter() {
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: config.email.user,
-      pass: config.email.pass,
+      user: config.email.EMAIL_USER,
+      pass: config.email.EMAIL_PASS,
     },
     connectionTimeout: 30000,
     greetingTimeout: 30000,
@@ -46,7 +47,7 @@ function createTransporter() {
 
 export async function sendResetPasswordEmail(to: string, token: string) {
   const resetUrl = `${
-    config.clientUrl
+    config.CLIENT_URL
   }/reset-password?token=${encodeURIComponent(token)}`;
   // await transporter.sendMail({
   //   from: config.email.user,
@@ -70,7 +71,7 @@ export async function sendOtpEmail(to: string, otp: string) {
     tls: {
       rejectUnauthorized: false, // Allows unverified SSL certificates
     },
-    debug: config.isDevelopment,
+    debug: config.IS_DEVELOPMENT,
   });
 
   try {
@@ -103,7 +104,7 @@ export async function sendResetPasswordOtp(to: string, otp: string) {
   const { user, pass } = validateEmailConfig();
 
   if (!to) {
-    throw new Error("User's email address required");
+    throw new HttpError("User's email address required", 404);
   }
 
   const transporter = nodemailer.createTransport({
@@ -112,7 +113,7 @@ export async function sendResetPasswordOtp(to: string, otp: string) {
     tls: {
       rejectUnauthorized: false, // Allows unverified SSL certificates
     },
-    debug: config.isDevelopment,
+    debug: config.IS_DEVELOPMENT,
   });
 
   const mailOptions = {

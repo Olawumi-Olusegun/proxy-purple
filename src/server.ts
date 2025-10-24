@@ -3,7 +3,7 @@ import app from "./app";
 import config from "./config";
 import { Dbconnection } from "./database/dbConnection";
 
-const PORT = config.port;
+const PORT = config.PORT;
 
 Dbconnection()
   .then(() => {

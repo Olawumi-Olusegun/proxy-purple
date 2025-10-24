@@ -1,32 +1,73 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { CreateCouponSchemaType } from "../validators/coupon.schema";
 
-export interface ICoupon extends Document {
-  code: string;
-  discountType: "percentage" | "fixed";
-  discountAmount: number;
-  minPurchase: number;
-  expirationDate: Date;
-  usageLimit: number;
-  usedCount: number;
-  isActive: boolean;
-  createdAt: Date;
-}
-
-const couponSchema = new Schema<ICoupon>({
-  code: { type: String, required: true, unique: true },
-  discountType: {
-    type: String,
-    enum: ["percentage", "fixed"],
-    required: true,
+const couponSchema = new Schema<CreateCouponSchemaType>(
+  {
+    code: {
+      type: String,
+      required: [true, "Please provide a coupon code"],
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed"],
+      required: [true, "Please provide discount type"],
+    },
+    discountValue: {
+      type: Number,
+      required: [true, "Please provide discount value"],
+      min: [0, "Discount value cannot be negative"],
+    },
+    minOrderAmount: {
+      type: Number,
+      default: 0,
+      min: [0, "Minimum order amount cannot be negative"],
+    },
+    maxDiscountAmount: {
+      type: Number,
+      min: [0, "Maximum discount amount cannot be negative"],
+    },
+    validFrom: {
+      type: Date,
+    },
+    validUntil: {
+      type: Date,
+    },
+    expiryDate: {
+      type: Date,
+      required: [true, "Please provide expiry date"],
+    },
+    usageLimit: {
+      type: Number,
+      required: [true, "Please provide usage limit"],
+      min: [1, "Usage limit must be at least 1"],
+    },
+    usedCount: {
+      type: Number,
+      default: 0,
+      min: [0, "Used count cannot be negative"],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    status: {
+      type: String,
+      enum: ["Active", "Inactive", "Expired", "Suspended"],
+      default: "Active",
+    },
   },
-  discountAmount: { type: Number, required: true },
-  minPurchase: { type: Number, default: 0 },
-  expirationDate: { type: Date, required: true },
-  usageLimit: { type: Number, default: 1 },
-  usedCount: { type: Number, default: 0 },
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-});
+  {
+    timestamps: true,
+  }
+);
 
-const CouponModel = model<ICoupon>("Coupon", couponSchema);
+couponSchema.index({ code: 1, isActive: 1 });
+
+const CouponModel = mongoose.model<CreateCouponSchemaType>(
+  "Coupon",
+  couponSchema
+);
 export default CouponModel;

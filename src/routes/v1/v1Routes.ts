@@ -1,5 +1,5 @@
 import express from "express";
-import { validate } from "../../middlewares/validate.middleware";
+import { validateData } from "../../middlewares/validate.middleware";
 import {
   signinSchema,
   signupSchema,
@@ -13,11 +13,11 @@ import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 const v1Routes = express.Router();
 
 //Authentication
-v1Routes.post("/signup", validate(signupSchema), authController.signup);
-v1Routes.post("/signin", validate(signinSchema), authController.signin);
+v1Routes.post("/signup", validateData(signupSchema), authController.signup);
+v1Routes.post("/signin", validateData(signinSchema), authController.signin);
 v1Routes.post(
   "/verify-signup-otp",
-  validate(verifyOTPSchema),
+  validateData(verifyOTPSchema),
   authController.verifyOTP
 );
 v1Routes.post("/signout", authController.signout);

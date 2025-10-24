@@ -1,6 +1,5 @@
 import { User } from "../../models/user.model";
 import { hashToken } from "../../utils/crypto.util";
-import { StringValue } from "ms";
 import jwt from "jsonwebtoken";
 import { AuthToken } from "../../models/auth-token.model";
 import { verifyGoogleIdToken } from "../google.service";
@@ -19,14 +18,17 @@ export class AuthService {
   private readonly jwtBycryptRounds: number;
 
   constructor() {
-    this.jwtSecret = config.jwt.JWT_ACCESS_SECRET || "secret";
-    this.jwtRefreshSecret = config.jwt.JWT_REFRESH_SECRET || "refreshSecret";
+    this.jwtSecret = config.jwt.JWT_ACCESS_SECRET || "";
+    this.jwtRefreshSecret = config.jwt.JWT_REFRESH_SECRET || "";
     this.jwtExpiresIn = config.jwt.JWT_ACCESS_EXPIRES || "1h";
     this.jwtRefreshExpiresIn = config.jwt.JWT_REFRESH_EXPIRES || "7d";
     this.jwtBycryptRounds = parseInt(process.env.JWT_BYCRPYT_ROUNDS || "10");
 
     if (!this.jwtSecret || !this.jwtRefreshSecret) {
-      throw new Error("JWT_SECRET are not defined in environmental file");
+      throw new HttpError(
+        "JWT_SECRET are not defined in environmental file",
+        404
+      );
     }
   }
 
@@ -152,7 +154,7 @@ export class AuthService {
       await CreateAndSaveAuthTokenToDatabase(userExist.id, userExist.email);
 
     return {
-      userExist,
+      user: userExist,
       accessToken,
       refreshToken,
     };
@@ -221,9 +223,9 @@ export class AuthService {
       await CreateAndSaveAuthTokenToDatabase(userExist.id, userExist.email);
 
     return {
+      user: userExist,
       accessToken,
       refreshToken,
-      userExist,
     };
   }
 
