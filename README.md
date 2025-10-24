@@ -25,8 +25,35 @@ Deployed API Endpoint
   Create, Read
   /api/v1/coupons
 
+  {
+  "code": "WELCOME10",
+  "discountType": "percentage",
+  "discountValue": 10,
+  "minOrderAmount": 100,
+  "maxDiscountAmount": 50,
+  "validFrom": "2025-01-01",
+  "validUntil": "2025-12-31",
+  "expiryDate": "2025-12-31",
+  "usageLimit": 100,
+  "usedCount": 0,
+  "status": "Active",
+  "isActive": true
+}
+
+
 Update, Delete
   /api/v1/coupons/:couponId
+  /api/v1/coupons/68f9ff6c0aad47eee26b5814
+
+{
+  "discountType": "percentage",
+  "discountValue": 10,
+  "minOrderAmount": 100,
+  "maxDiscountAmount": 50,
+  "expiryDate": "2025-12-31",
+  "usageLimit": 100,
+  "usedCount": 0,
+}
 
 ```
 
