@@ -2,12 +2,12 @@ import CouponModel from "../../models/coupon-model";
 import { calculateDiscount, validateCoupon } from "../../utils/coupon-utils";
 import { HttpError } from "../../utils/http-error";
 import {
-  CreateCouponSchemaType,
-  UpdateCouponSchemaType,
+  CreateCouponSchema,
+  UpdateCouponSchema,
 } from "../../validators/coupon.schema";
 
 class CouponService {
-  async createCoupon(data: CreateCouponSchemaType) {
+  async createCoupon(data: CreateCouponSchema) {
     const existingCoupon = await CouponModel.findOne({
       code: data.code,
       isActive: true,
@@ -43,7 +43,7 @@ class CouponService {
     return coupon;
   }
 
-  async updateCoupon(couponId: string, data: UpdateCouponSchemaType) {
+  async updateCoupon(couponId: string, data: UpdateCouponSchema) {
     if (!couponId) {
       throw new HttpError("Coupon id is required", 400);
     }
@@ -72,7 +72,7 @@ class CouponService {
     return await CouponModel.findByIdAndDelete(couponId);
   }
 
-  applyDiscount(coupon: CreateCouponSchemaType, totalAmount: number) {
+  applyDiscount(coupon: CreateCouponSchema, totalAmount: number) {
     validateCoupon(coupon);
     const discountAmount = calculateDiscount(coupon, totalAmount);
     const finalAmount = totalAmount - discountAmount;

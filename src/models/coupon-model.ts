@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import { CreateCouponSchemaType } from "../validators/coupon.schema";
+import { CreateCouponSchema } from "../validators/coupon.schema";
 
-const couponSchema = new Schema<CreateCouponSchemaType>(
+const couponSchema = new Schema<CreateCouponSchema>(
   {
     code: {
       type: String,
@@ -66,8 +66,5 @@ const couponSchema = new Schema<CreateCouponSchemaType>(
 
 couponSchema.index({ code: 1, isActive: 1 });
 
-const CouponModel = mongoose.model<CreateCouponSchemaType>(
-  "Coupon",
-  couponSchema
-);
+const CouponModel = mongoose.model<CreateCouponSchema>("Coupon", couponSchema);
 export default CouponModel;

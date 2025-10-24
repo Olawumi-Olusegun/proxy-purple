@@ -3,20 +3,28 @@ import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 import * as usersController from "../../controllers/users.controller";
 import { validateData } from "../../middlewares/validate.middleware";
 import {
-  signinSchema,
-  signupSchema,
-  verifyOTPSchema,
+  SigninSchema,
+  SignupSchema,
+  VerifyOTPSchema,
 } from "../../validators/auth.validators";
 import * as authController from "../../controllers/auth.controller";
 
 const router = express.Router();
 //Authentication
 // /api/v1/auth/
-router.post("/signup", validateData(signupSchema), authController.signup);
-router.post("/signin", validateData(signinSchema), authController.signin);
+router.post(
+  "/signup",
+  validateData({ body: SignupSchema }),
+  authController.signup
+);
+router.post(
+  "/signin",
+  validateData({ body: SigninSchema }),
+  authController.signin
+);
 router.post(
   "/verify-signup-otp",
-  validateData(verifyOTPSchema),
+  validateData({ body: VerifyOTPSchema }),
   authController.verifyOTP
 );
 router.post("/signout", authController.signout);

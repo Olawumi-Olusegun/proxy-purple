@@ -15,18 +15,24 @@ router.use(authMiddleware, authorize("admin"));
 
 router
   .route("/")
-  .post(validateData(CreateCouponSchema), couponController.createCoupon)
+  .post(
+    validateData({ body: CreateCouponSchema }),
+    couponController.createCoupon
+  )
   .get(couponController.getCoupons);
 
 router
   .route("/:couponId")
-  .patch(validateData(UpdateCouponSchema), couponController.updateCoupon)
+  .patch(
+    validateData({ body: UpdateCouponSchema }),
+    couponController.updateCoupon
+  )
   .delete(couponController.deleteCoupon);
 
 //
 router.post(
   "/validate-coupon",
-  validateData(CreateCouponSchema),
+  validateData({ body: CreateCouponSchema }),
   couponController.validateCouponCode
 );
 

@@ -1,7 +1,7 @@
-import { CreateCouponSchemaType } from "../validators/coupon.schema";
+import { CreateCouponSchema } from "../validators/coupon.schema";
 
 export const calculateDiscount = (
-  coupon: CreateCouponSchemaType,
+  coupon: CreateCouponSchema,
   totalAmount: number
 ): number => {
   let discount = 0;
@@ -25,7 +25,7 @@ export const calculateDiscount = (
   return Math.min(discount, totalAmount);
 };
 
-export const validateCoupon = (coupon: CreateCouponSchemaType): boolean => {
+export const validateCoupon = (coupon: CreateCouponSchema): boolean => {
   const now = new Date();
 
   if (!coupon.isActive) {
