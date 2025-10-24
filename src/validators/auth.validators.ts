@@ -4,15 +4,16 @@ const MailSchema = z.email("Invalid email address");
 
 const SignupSchema = z.object({
   email: MailSchema,
-  password: z
-    .string({ error: "Password is required" })
-    .min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1).optional(),
 });
 
 const VerifyOTPSchema = z.object({
   email: MailSchema,
-  otp: z.string({ error: "OTP is required" }).min(6).max(6),
+  otp: z
+    .string()
+    .min(6, { message: "OTP is required" })
+    .max(6, { message: "OTP is required" }),
 });
 
 const SigninSchema = z.object({
