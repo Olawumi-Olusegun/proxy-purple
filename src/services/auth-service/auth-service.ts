@@ -9,6 +9,15 @@ import { generateAlphaNumericOTP } from "../../utils/generateOTP";
 import { HttpError } from "../../utils/http-error";
 import config from "../../config";
 import { CreateAndSaveAuthTokenToDatabase } from "../../utils/auth-token-utils";
+import { TokenPayload } from "google-auth-library";
+
+type Payload = {
+  userId: string;
+  email: string;
+  name?: string;
+  iat: number;
+  exp: number;
+};
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -52,8 +61,8 @@ export class AuthService {
         isVerified: false,
       });
 
-      return { newUser };
-    } catch (error) {
+      return newUser;
+    } catch {
       //Rollback OTP if email sending fails
       await OtpModel.deleteMany({ email });
       await User.deleteOne({ email });
@@ -62,76 +71,68 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, otp: string) {
-    try {
-      const otpRecord = await OtpModel.findOne({ email });
+    const otpRecord = await OtpModel.findOne({ email });
 
-      if (!otpRecord) {
-        throw new HttpError("OTP not found for this email", 404);
-      }
-
-      // Delete OTP if it has expired
-      if (otpRecord.expiresAt < new Date()) {
-        await OtpModel.deleteMany({ email });
-        throw new HttpError("OTP has expired", 400);
-      }
-
-      const isMatch = await otpRecord.isValid(otp);
-      if (!isMatch) {
-        throw new HttpError("Invalid OTP", 400);
-      }
-
-      // Mark user as verified
-      const updatedUser = await User.findOneAndUpdate(
-        { email },
-        { isVerified: true },
-        { new: true }
-      ).select("-password");
-
-      if (!updatedUser) {
-        throw new HttpError("User not found", 404);
-      }
-
-      // Delete all OTPs for this user (cleanup)
-      await OtpModel.deleteMany({ email });
-
-      const { accessToken, refreshToken } =
-        await CreateAndSaveAuthTokenToDatabase(
-          updatedUser._id,
-          updatedUser.email
-        );
-
-      return {
-        user: updatedUser,
-        accessToken,
-        refreshToken,
-      };
-    } catch (error) {
-      throw error;
+    if (!otpRecord) {
+      throw new HttpError("OTP not found for this email", 404);
     }
+
+    // Delete OTP if it has expired
+    if (otpRecord.expiresAt < new Date()) {
+      await OtpModel.deleteMany({ email });
+      throw new HttpError("OTP has expired", 400);
+    }
+
+    const isMatch = await otpRecord.isValid(otp);
+    if (!isMatch) {
+      throw new HttpError("Invalid OTP", 400);
+    }
+
+    // Mark user as verified
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      { isVerified: true },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      throw new HttpError("User not found", 404);
+    }
+
+    // Delete all OTPs for this user (cleanup)
+    await OtpModel.deleteMany({ email });
+
+    const { accessToken, refreshToken } =
+      await CreateAndSaveAuthTokenToDatabase(
+        updatedUser._id,
+        updatedUser.email
+      );
+
+    return {
+      user: updatedUser,
+      accessToken,
+      refreshToken,
+    };
   }
 
   async verifyForgotPasswordOtp(email: string, otp: string) {
-    try {
-      const otpRecord = await OtpModel.findOne({ email });
+    const otpRecord = await OtpModel.findOne({ email });
 
-      if (!otpRecord) {
-        throw new HttpError("OTP not found for this email", 404);
-      }
-
-      // Delete OTP if it has expired
-      if (otpRecord.expiresAt < new Date()) {
-        await OtpModel.deleteMany({ email });
-        throw new HttpError("OTP has expired", 400);
-      }
-
-      const isMatch = await otpRecord.isValid(otp);
-      if (!isMatch) {
-        throw new HttpError("Invalid OTP", 400);
-      }
-      return { ok: true };
-    } catch (error) {
-      throw error;
+    if (!otpRecord) {
+      throw new HttpError("OTP not found for this email", 404);
     }
+
+    // Delete OTP if it has expired
+    if (otpRecord.expiresAt < new Date()) {
+      await OtpModel.deleteMany({ email });
+      throw new HttpError("OTP has expired", 400);
+    }
+
+    const isMatch = await otpRecord.isValid(otp);
+    if (!isMatch) {
+      throw new HttpError("Invalid OTP", 400);
+    }
+    return { ok: true };
   }
 
   async signin(email: string, password: string) {
@@ -164,15 +165,22 @@ export class AuthService {
   async refreshToken(oldRefreshToken: string) {
     if (!oldRefreshToken) throw new Error("No refresh token provided");
 
-    let payload: any;
+    let payload: Payload;
     try {
-      payload = jwt.verify(oldRefreshToken, this.jwtRefreshSecret);
+      payload = jwt.verify(
+        oldRefreshToken,
+        this.jwtRefreshSecret
+      ) as jwt.JwtPayload & Payload;
     } catch {
       throw new HttpError("Invalid refresh token", 401);
     }
 
+    if (!payload) {
+      throw new HttpError("Invalid refresh token", 401);
+    }
+
     const existing = await AuthToken.findOne({
-      userId: payload.userId,
+      userId: payload?.userId,
       token: hashToken(oldRefreshToken),
     });
 
@@ -200,9 +208,20 @@ export class AuthService {
   async googleAuth(idToken: string) {
     if (!idToken) throw new HttpError("No Google ID token provided", 400);
 
-    const payload: any = await verifyGoogleIdToken(idToken);
+    let payload: TokenPayload | undefined;
+
+    try {
+      payload = await verifyGoogleIdToken(idToken);
+    } catch {
+      throw new HttpError("Invalid Google ID token", 401);
+    }
+
+    if (!payload) {
+      throw new HttpError("Invalid Google ID token", 401);
+    }
+
     const email = payload.email;
-    const googleId = payload.userId;
+    const googleId = payload.sub;
     const name = payload.name;
 
     let userExist = await User.findOne({ email });
@@ -216,7 +235,7 @@ export class AuthService {
       });
     } else if (!userExist.googleId) {
       userExist.googleId = googleId;
-      await userExist.save();
+      userExist = await userExist.save();
     }
 
     const { accessToken, refreshToken } =
@@ -236,7 +255,14 @@ export class AuthService {
     }
 
     try {
-      const payload: any = jwt.verify(refreshToken, this.jwtRefreshSecret);
+      const payload: Payload = jwt.verify(
+        refreshToken,
+        this.jwtRefreshSecret
+      ) as jwt.JwtPayload & Payload;
+
+      if (!payload) {
+        throw new HttpError("Invalid refresh token", 401);
+      }
 
       await AuthToken.deleteOne({
         userId: payload.userId,

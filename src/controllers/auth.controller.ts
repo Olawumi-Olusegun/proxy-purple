@@ -25,42 +25,50 @@ const ACCESS_TOKEN_COOKIE_OPTIONS = {
 
 const authService = new AuthService();
 
-interface UserResponse {
-  success: boolean;
-  message?: string;
-  user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    country: string;
-    city: string;
-    addressLine1: string;
-    addressLine2: string;
-    postalCode: string;
-    role?: string;
-    isVerified?: boolean;
-  };
+interface UserData {
+  id?: string;
+  _id?: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  country?: string;
+  city?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  postalCode?: string;
+  role?: string;
+  isVerified?: boolean;
 }
 
-function createUserResponse(user: any, message?: string): UserResponse {
+interface UserResponse {
+  success: boolean;
+  message: string;
+  user: UserData;
+}
+
+function createUserResponse(
+  userData: UserData,
+  message = "",
+  success = true
+): UserResponse {
   return {
-    success: true,
-    message: message ?? "",
+    success,
+    message,
     user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName ?? "",
-      lastName: user.lastName ?? "",
-      phoneNumber: user.phoneNumber ?? "",
-      country: user.country ?? "",
-      city: user.city ?? "",
-      addressLine1: user.addressLine1 ?? "",
-      addressLine2: user.addressLine2 ?? "",
-      postalCode: user.postalCode ?? "",
-      role: user.role,
-      isVerified: user.isVerified,
+      id: userData.id,
+      _id: userData._id,
+      email: userData.email,
+      firstName: userData.firstName ?? "",
+      lastName: userData.lastName ?? "",
+      phoneNumber: userData.phoneNumber ?? "",
+      country: userData.country ?? "",
+      city: userData.city ?? "",
+      addressLine1: userData.addressLine1 ?? "",
+      addressLine2: userData.addressLine2 ?? "",
+      postalCode: userData.postalCode ?? "",
+      role: userData.role,
+      isVerified: userData.isVerified,
     },
   };
 }
@@ -78,6 +86,7 @@ export async function googleAuth(
     }
 
     const user = await authService.googleAuth(idToken);
+
     res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
     res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.status(201).json(createUserResponse(user.user));
@@ -94,14 +103,10 @@ export async function signup(
   try {
     const { email, password } = req.body;
 
-    const user = (await authService.signup(email, password)) as {
-      newUser: any;
-      accessToken: string;
-      refreshToken: string;
-    };
+    await authService.signup(email, password);
 
-    res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    // res.cookie("refreshToken", user, COOKIE_OPTIONS);
+    // res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.status(201).json({
       message: "User created successfully, an OTP has been sent to your email",
       success: true,
@@ -127,7 +132,7 @@ export async function verifyOTP(
     res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
     res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.status(200).json(createUserResponse(user));
-  } catch (err: any) {
+  } catch (err) {
     next(err);
   }
 }

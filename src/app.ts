@@ -1,13 +1,25 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.middleware";
 import apiRoutes from "./routes";
-import { createRateLimiter } from "./middlewares/rate-limit.middleware";
+import rateLimiter from "./middlewares/rate-limit.middleware";
 import cron from "node-cron";
 import axios from "axios";
 import config from "./config";
+import { gracefulShutdown } from "./database/dbConnection";
+
+process.on("uncaughtException", (err: Error) =>
+  gracefulShutdown(err, "uncaughtException")
+);
+
+process.on("unhandledRejection", (reason) => {
+  const error =
+    reason instanceof Error ? reason : new Error(JSON.stringify(reason));
+  gracefulShutdown(error, "unhandledRejection");
+});
 
 const app = express();
 
@@ -18,17 +30,13 @@ app.use(
     credentials: true,
   })
 );
+app.use(morgan("dev"));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const globalLimiter = createRateLimiter({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  limit: 100, // 100 req/min per IP
-});
-
-app.use(globalLimiter);
+app.use(rateLimiter.globalLimiter);
 app.get("/health", async (_req, res) => {
   return res.json({ ok: true });
 });

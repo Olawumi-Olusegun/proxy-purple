@@ -33,7 +33,7 @@ function validateEmailConfig() {
   };
 }
 
-function createTransporter() {
+export function createTransporter() {
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -49,6 +49,7 @@ export async function sendResetPasswordEmail(to: string, token: string) {
   const resetUrl = `${
     config.CLIENT_URL
   }/reset-password?token=${encodeURIComponent(token)}`;
+  console.log(resetUrl);
   // await transporter.sendMail({
   //   from: config.email.user,
   //   to,
@@ -73,28 +74,27 @@ export async function sendOtpEmail(to: string, otp: string) {
     },
     debug: config.IS_DEVELOPMENT,
   });
+  const mailOptions = {
+    from: `"ProxyPurple" <${user}>`,
+    to: to,
+    subject: "Your OTP Code",
+    text: `Your verification code is ${otp}. It expires in 10 minutes.`,
+    html: `
+      <div style="font-family:Arial, sans-serif;line-height:1.5">
+        <h2>Verify your email</h2>
+        <p>Your one-time password (OTP) is:</p>
+        <h1 style="letter-spacing:4px">${otp}</h1>
+        <p>This code expires in 10 minutes. Please do not share it with anyone.</p>
+      </div>
+    `,
+  };
 
   try {
-    const mailOptions = {
-      from: `"ProxyPurple" <${user}>`,
-      to: to,
-      subject: "Your OTP Code",
-      text: `Your verification code is ${otp}. It expires in 10 minutes.`,
-      html: `
-        <div style="font-family:Arial, sans-serif;line-height:1.5">
-          <h2>Verify your email</h2>
-          <p>Your one-time password (OTP) is:</p>
-          <h1 style="letter-spacing:4px">${otp}</h1>
-          <p>This code expires in 10 minutes. Please do not share it with anyone.</p>
-        </div>
-      `,
-    };
-
     const info = await transporter.sendMail(mailOptions);
 
     return info;
-  } catch (error) {
-    throw error;
+  } catch {
+    throw new HttpError("Failed to send OTP email", 500);
   } finally {
     transporter.close();
   }

@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "../models/user.model";
 import { AuthRequest } from "../types/type";
+import { UsersService } from "../services/users-service/users-service";
+
+const usersService = new UsersService();
 
 export const getUsers = async (
   req: Request,
@@ -8,8 +11,27 @@ export const getUsers = async (
   next: NextFunction
 ) => {
   try {
-    const users = await User.find();
+    const users = await usersService.getUsers();
     res.json({ success: true, users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.params.userId;
+
+  if (userId) {
+    return res.status(400).json({ success: false, message: "Invalid user ID" });
+  }
+
+  try {
+    await usersService.deleteUser(userId);
+    res.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
     next(error);
   }
@@ -43,8 +65,8 @@ export const myProfile = async (
 
 export const UpdateMyProfile = async (
   req: AuthRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
+  // next: NextFunction
 ) => {
   try {
     const userId = req.user?.userId;
@@ -96,7 +118,7 @@ export const UpdateMyProfile = async (
         postalCode: user.postalCode,
       },
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       message: "Something went wrong",

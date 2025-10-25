@@ -25,7 +25,10 @@ export interface IProduct {
   description: string;
   price: number;
   category: string;
-  stock: number;
+  stock?: number;
+  proxyType: string;
+  status: "Active" | "Inactive" | "Expired" | "Suspended";
+  renewalDate: Date;
   images: string[];
   createdAt: Date;
   updatedAt: Date;
