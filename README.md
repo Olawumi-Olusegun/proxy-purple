@@ -395,3 +395,11 @@ Body: {
 "category": "Mobile",
 "proxyType": "Mobile"
 }
+
+# ============================================
+
+# Get Proxy servers
+
+# ============================================
+
+GET /servers

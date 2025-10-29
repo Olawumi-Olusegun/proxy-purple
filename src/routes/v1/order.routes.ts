@@ -1,11 +1,18 @@
 import express from "express";
 import * as orderController from "../../controllers/order.controller";
 import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
+import { validateData } from "../../middlewares/validate.middleware";
+import { CreateOrderSchemaWithCouponCode } from "../../validators/order.validators";
 
 const router = express.Router();
 router.use(authMiddleware);
 
-router.post("/create", authorize("admin"), orderController.createOrder);
+router.post(
+  "/create",
+  validateData({ body: CreateOrderSchemaWithCouponCode }),
+  authorize("admin"),
+  orderController.createOrder
+);
 router.get("/get-all", authorize("admin", "user"), orderController.getOrders);
 router.get(
   "/get-order/:orderId",

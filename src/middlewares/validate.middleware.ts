@@ -15,8 +15,26 @@ export function validateData(schemas: {
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
+        const firstIssue = error.issues[0];
+        let message = firstIssue.message;
+
+        // Check if it's an invalid_type error with undefined received
+        if (
+          firstIssue.code === "invalid_type" &&
+          message.includes("received undefined")
+        ) {
+          const fieldName = firstIssue.path[0];
+          const expected =
+            "expected" in firstIssue ? firstIssue.expected : null;
+          const isPlural = expected === "array";
+          message = `${
+            String(fieldName).charAt(0).toUpperCase() +
+            String(fieldName).slice(1)
+          } ${isPlural ? "are" : "is"} required`;
+        }
+
         return res.status(400).json({
-          message: error.issues[0].message,
+          message,
           success: false,
         });
       }
