@@ -1,5 +1,4 @@
 import app from "./app";
-
 import config from "./config";
 import { DbConnection } from "./database/dbConnection";
 

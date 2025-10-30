@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const envSchema = z.object({
+const envSchema = z.object({
   PORT: z.string().default("4000").transform(Number),
   MONGO_URI: z.string().min(1, "MONGO_URI is required"),
 
@@ -27,3 +27,7 @@ export const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 });
+
+type envSchema = z.infer<typeof envSchema>;
+
+export { envSchema };

@@ -117,17 +117,6 @@ export const createOrder = async (
   }
 };
 
-// interface GetOrdersQuery {
-//   page?: string | number;
-//   limit?: string | number;
-//   status?: string;
-//   search?: string;
-//   sortBy?: string;
-//   sortOrder?: "asc" | "desc";
-//   startDate?: string;
-//   endDate?: string;
-// }
-
 export const getOrders = async (
   req: AuthRequest,
   res: Response,
@@ -331,7 +320,6 @@ export const deleteOrder = async (
         message: error.message,
       });
     }
-
     next(error);
   }
 };

@@ -1,17 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import * as z from "zod";
 
-export function validateData(schemas: {
+type SchemaValidationType = {
   body?: z.ZodObject<z.ZodRawShape>;
   params?: z.ZodObject<z.ZodRawShape>;
   query?: z.ZodObject<z.ZodRawShape>;
-}) {
+};
+
+export function validateData(schemas: SchemaValidationType) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) schemas.body.parse(req.body);
       if (schemas.params) schemas.params.parse(req.params);
       if (schemas.query) schemas.query.parse(req.query);
-
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

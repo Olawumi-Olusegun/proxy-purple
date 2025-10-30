@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { verifyAccessToken } from "../services/jwt.service";
 import config from "../config";
@@ -26,7 +26,7 @@ const ACCESS_TOKEN_COOKIE_OPTIONS = {
 
 // Inactive: AuthMiddleware for Token based authentication
 export async function requireAuth(
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) {
@@ -35,11 +35,21 @@ export async function requireAuth(
     if (!header)
       return res.status(401).json({ error: "No authorization header" });
     const token = header.split(" ")[1];
-    const payload = verifyAccessToken(token) as any;
+    const { userId, email, role } = verifyAccessToken(token) as jwt.JwtPayload &
+      AuthRequest["user"];
+
+    if (!userId || !email || !role) {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+
     // attach payload to request
-    (req as any).user = payload;
+    req.user = {
+      email,
+      role,
+      userId,
+    };
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }

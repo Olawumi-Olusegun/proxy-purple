@@ -11,14 +11,14 @@ import axios from "axios";
 import config from "./config";
 import { gracefulShutdown } from "./database/dbConnection";
 
-process.on("uncaughtException", (err: Error) =>
-  gracefulShutdown(err, "uncaughtException")
-);
+process.on("uncaughtException", (err: Error) => {
+  return gracefulShutdown(err, "uncaughtException");
+});
 
 process.on("unhandledRejection", (reason) => {
-  const error =
+  const errorMessage =
     reason instanceof Error ? reason : new Error(JSON.stringify(reason));
-  gracefulShutdown(error, "unhandledRejection");
+  gracefulShutdown(errorMessage, "unhandledRejection");
 });
 
 const app = express();
@@ -36,10 +36,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(rateLimiter.globalLimiter);
 app.get("/health", async (_req, res) => {
   return res.json({ ok: true });
 });
+
+app.use(rateLimiter.globalLimiter);
 app.use("/api", apiRoutes);
 
 // 404 handler for undefined API routes

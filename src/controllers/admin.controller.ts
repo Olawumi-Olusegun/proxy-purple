@@ -7,7 +7,6 @@ export const getAdmin = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Access to admin");
     console.log(req.user);
     return res.status(200).json({ success: true });
   } catch (error) {
