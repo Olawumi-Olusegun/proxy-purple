@@ -1,5 +1,4 @@
 import { User } from "../../models/user.model";
-import { hashToken } from "../../utils/crypto.util";
 import jwt from "jsonwebtoken";
 import { AuthToken } from "../../models/auth-token.model";
 import { verifyGoogleIdToken } from "../google.service";
@@ -51,8 +50,10 @@ export class AuthService {
       // Create OTP before creating user in database
       const otpRecord = await this.createOtpRecord(email);
 
+      console.log("OTP for signup:", otpRecord.otp);
+
       // Try sending OTP email before user creation
-      await sendOtpEmailWithResend(email, otpRecord.otp);
+      // await sendOtpEmailWithResend(email, otpRecord.otp);
 
       // Only create user AFTER successful email sending
       const newUser = await User.create({
@@ -65,7 +66,7 @@ export class AuthService {
     } catch {
       //Rollback OTP if email sending fails
       await OtpModel.deleteMany({ email });
-      await User.deleteOne({ email });
+      await User.deleteMany({ email });
       throw new HttpError("Failed to send OTP email. Please try again.", 500);
     }
   }
@@ -132,7 +133,7 @@ export class AuthService {
     if (!isMatch) {
       throw new HttpError("Invalid OTP", 400);
     }
-    return { ok: true };
+    return { ok: true, success: true, message: "OTP verified successfully" };
   }
 
   async signin(email: string, password: string) {
@@ -179,12 +180,12 @@ export class AuthService {
       throw new HttpError("Invalid refresh token", 401);
     }
 
-    const existing = await AuthToken.findOne({
+    const existingUser = await AuthToken.findOne({
       userId: payload?.userId,
-      token: hashToken(oldRefreshToken),
+      token: oldRefreshToken,
     });
 
-    if (!existing) {
+    if (!existingUser) {
       throw new HttpError("Refresh token not recognized or expired", 401);
     }
 
@@ -196,7 +197,7 @@ export class AuthService {
       await CreateAndSaveAuthTokenToDatabase(user.id, user.email);
 
     // Delete old token (rotation)
-    await AuthToken.deleteOne({ _id: existing._id });
+    await AuthToken.deleteOne({ _id: existingUser._id });
 
     return {
       accessToken,
@@ -342,7 +343,10 @@ export class AuthService {
     try {
       await OtpModel.deleteMany({ email });
 
-      const otpCode = generateAlphaNumericOTP();
+      // const otpCode = generateAlphaNumericOTP();
+
+      // TEMP OTP
+      const otpCode = 123456;
       const otpRecord = await OtpModel.create({
         email,
         otp: otpCode,

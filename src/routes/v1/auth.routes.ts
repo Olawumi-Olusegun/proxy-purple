@@ -1,7 +1,10 @@
 import express from "express";
 import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 import * as usersController from "../../controllers/users.controller";
-import { validateData } from "../../middlewares/validate.middleware";
+import {
+  validateData,
+  ValidationSource,
+} from "../../middlewares/validate.middleware";
 import {
   SigninSchema,
   SignupSchema,
@@ -10,23 +13,28 @@ import {
 import * as authController from "../../controllers/auth.controller";
 
 const router = express.Router();
+
+router.get("/", authMiddleware, authorize("admin"), usersController.getUsers);
 //Authentication
 // /api/v1/auth/
 router.post(
   "/signup",
-  validateData({ body: SignupSchema }),
+  validateData(SignupSchema, ValidationSource.BODY),
   authController.signup
 );
+
 router.post(
   "/signin",
-  validateData({ body: SigninSchema }),
+  validateData(SigninSchema, ValidationSource.BODY),
   authController.signin
 );
+
 router.post(
   "/verify-signup-otp",
-  validateData({ body: VerifyOTPSchema }),
+  validateData(VerifyOTPSchema, ValidationSource.BODY),
   authController.verifyOTP
 );
+
 router.post("/signout", authController.signout);
 
 router.post("/forgot-password", authController.forgotPassword);
@@ -37,7 +45,6 @@ router.post(
 
 router.post("/reset-password", authController.resetPassword);
 
-router.get("/", authMiddleware, authorize("admin"), usersController.getUsers);
 router.get(
   "/profile",
   authMiddleware,

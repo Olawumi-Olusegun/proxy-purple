@@ -188,7 +188,6 @@ export const authorize = (...allowedRoles: string[]) => {
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({ message: "Unauthorized", success: false });
     }
-
     next();
   };
 };

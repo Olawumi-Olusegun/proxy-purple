@@ -100,7 +100,6 @@ export const getProducts = async (
         message: error.message,
       });
     }
-
     next(error);
   }
 };

@@ -28,6 +28,7 @@ app.use(
   cors({
     origin: ["http://localhost:5173"],
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 app.use(morgan("dev"));
@@ -36,7 +37,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get("/health", async (_req, res) => {
+app.get("/health", (_req, res) => {
   return res.json({ ok: true });
 });
 

@@ -1,6 +1,9 @@
 import express from "express";
 import * as couponController from "../../controllers/coupon.controller";
-import { validateData } from "../../middlewares/validate.middleware";
+import {
+  validateData,
+  ValidationSource,
+} from "../../middlewares/validate.middleware";
 import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
 import {
   CreateCouponSchema,
@@ -16,7 +19,7 @@ router.use(authMiddleware, authorize("admin"));
 router
   .route("/")
   .post(
-    validateData({ body: CreateCouponSchema }),
+    validateData(CreateCouponSchema, ValidationSource.BODY),
     couponController.createCoupon
   )
   .get(couponController.getCoupons);
@@ -24,7 +27,7 @@ router
 router
   .route("/:couponId")
   .patch(
-    validateData({ body: UpdateCouponSchema }),
+    validateData(UpdateCouponSchema, ValidationSource.BODY),
     couponController.updateCoupon
   )
   .delete(couponController.deleteCoupon);
@@ -32,7 +35,7 @@ router
 //
 router.post(
   "/validate-coupon",
-  validateData({ body: CreateCouponSchema }),
+  validateData(CreateCouponSchema, ValidationSource.BODY),
   couponController.validateCouponCode
 );
 
