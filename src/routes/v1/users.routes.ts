@@ -1,26 +1,26 @@
 import express from "express";
 import * as usersController from "../../controllers/users.controller";
-import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
+import { isAuthenticated, authorize } from "../../middlewares/auth.middleware";
 
 const router = express.Router();
-// router.get("/", authMiddleware, authorize("admin"), usersController.getUsers);
+// router.get("/", isAuthenticated, authorize("admin"), usersController.getUsers);
 
 // /api/v1/users/
 router
   .route("/")
-  .get(authMiddleware, authorize("admin"), usersController.getUsers)
-  .patch(authMiddleware, authorize("admin"), usersController.getUsers);
+  .get(isAuthenticated, authorize("admin"), usersController.getUsers)
+  .patch(isAuthenticated, authorize("admin"), usersController.getUsers);
 
 router
   .get(
     "/profile",
-    authMiddleware,
+    isAuthenticated,
     authorize("admin", "user"),
     usersController.myProfile
   )
   .put(
     "/profile/update",
-    authMiddleware,
+    isAuthenticated,
     authorize("admin", "user"),
     usersController.UpdateMyProfile
   );

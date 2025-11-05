@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { verifyAccessToken } from "../services/jwt.service";
+import { Payload, verifyAccessToken } from "../services/jwt.service";
 import config from "../config";
 import { AuthToken } from "../models/auth-token.model";
 import {
@@ -36,23 +36,38 @@ export async function requireAuth(
       return res.status(401).json({ error: "No authorization header" });
     const token = header.split(" ")[1];
     const { userId, email, role } = verifyAccessToken(token) as jwt.JwtPayload &
-      AuthRequest["user"];
+      Payload;
 
     if (!userId || !email || !role) {
       return res.status(401).json({ error: "Invalid or expired token" });
     }
 
-    // attach payload to request
-    req.user = {
-      email,
-      role,
-      userId,
-    };
+    if (!req?.user) {
+      return res
+        .status(401)
+        .json({ message: "User not authenticated", success: false });
+    }
+
+    req.user.email = email;
+    req.user.role = role as string;
+    req.user.userId = userId;
+
     next();
   } catch {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }
+
+export const isAuthenticated = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Unauthorized", success: false });
+};
 
 // Active: Auth Middleware in use
 export const authMiddleware = async (
@@ -82,11 +97,16 @@ export const authMiddleware = async (
       return handleRefresh(req, res, next);
     }
 
-    req.user = {
-      userId: user._id.toString(),
-      email: user.email,
-      role: user.role as string,
-    };
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "User not authenticated", success: false });
+    }
+
+    req.user.id = user._id.toString();
+    req.user.email = user.email;
+    req.user.role = user.role as string;
+    req.user.userId = user._id.toString();
 
     return next();
   } catch {
@@ -148,6 +168,7 @@ const handleRefresh = async (
     }
 
     req.user = {
+      id: user._id.toString(),
       userId: user._id.toString(),
       email: user.email,
       role: user.role as string,

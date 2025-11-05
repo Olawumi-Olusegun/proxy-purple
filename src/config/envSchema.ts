@@ -23,6 +23,23 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   RESEND_EMAIL_API_KEY: z.string().optional(),
 
+  GOOGLE_OAUTH_CLIENT_ID: z
+    .string()
+    .min(1, "Google auth ID is required")
+    .nonempty(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z
+    .string()
+    .min(1, "Google auth secret is required")
+    .nonempty(),
+  GOOGLE_OAUTH_REDIRECT_URL: z
+    .string()
+    .min(1, "Google auth redirect url is required")
+    .nonempty(),
+  SESSION_SECRET: z
+    .string()
+    .min(1, "passport session secret is required")
+    .nonempty(),
+
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),

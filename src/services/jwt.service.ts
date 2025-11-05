@@ -2,7 +2,7 @@ import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { StringValue } from "ms";
 import config from "../config";
 
-type Payload = {
+export type Payload = {
   userId: string;
   email: string;
   role: string;

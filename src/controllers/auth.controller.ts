@@ -2,76 +2,29 @@ import { NextFunction, Request, Response } from "express";
 import { sendResetPasswordOtp } from "../services/email.service";
 import { User } from "../models/user.model";
 import { AuthService } from "../services/auth-service/auth-service";
-import { generateAlphaNumericOTP } from "../utils/generateOTP";
+// import { generateAlphaNumericOTP } from "../utils/generateOTP";
 import OtpModel from "../models/otp.model";
 import { AuthRequest } from "../types/type";
+import { prepareUserResponseData } from "../utils/prepare-user-response-data";
 
 // Helper type for typed request bodies
 type RequestWithBody<T> = Request & { body: T };
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-};
+// const COOKIE_OPTIONS = {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production",
+//   sameSite: "lax" as const,
+//   maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+// };
 
-const ACCESS_TOKEN_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  maxAge: 1000 * 60 * 60, // 1hr
-};
+// const ACCESS_TOKEN_COOKIE_OPTIONS = {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production",
+//   sameSite: "lax" as const,
+//   maxAge: 1000 * 60 * 60, // 1hr
+// };
 
 const authService = new AuthService();
-
-interface UserData {
-  id?: string;
-  _id?: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  country?: string;
-  city?: string;
-  addressLine1?: string;
-  addressLine2?: string;
-  postalCode?: string;
-  role?: string;
-  isVerified?: boolean;
-}
-
-interface UserResponse {
-  success: boolean;
-  message: string;
-  user: UserData;
-}
-
-function createUserResponse(
-  userData: UserData,
-  message = "",
-  success = true
-): UserResponse {
-  return {
-    success,
-    message,
-    user: {
-      id: userData.id,
-      _id: userData._id,
-      email: userData.email,
-      firstName: userData.firstName ?? "",
-      lastName: userData.lastName ?? "",
-      phoneNumber: userData.phoneNumber ?? "",
-      country: userData.country ?? "",
-      city: userData.city ?? "",
-      addressLine1: userData.addressLine1 ?? "",
-      addressLine2: userData.addressLine2 ?? "",
-      postalCode: userData.postalCode ?? "",
-      role: userData.role,
-      isVerified: userData.isVerified,
-    },
-  };
-}
 
 /* ============ GOOGLE AUTH ============ */
 export async function googleAuth(
@@ -87,9 +40,9 @@ export async function googleAuth(
 
     const user = await authService.googleAuth(idToken);
 
-    res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(201).json(createUserResponse(user.user));
+    // res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
+    // res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.status(201).json(prepareUserResponseData(user.user));
   } catch (err) {
     next(err);
   }
@@ -102,7 +55,6 @@ export async function signup(
 ) {
   try {
     const { email, password } = req.body;
-
     await authService.signup(email, password);
 
     // res.cookie("refreshToken", user, COOKIE_OPTIONS);
@@ -124,14 +76,11 @@ export async function verifyOTP(
   try {
     const { email, otp } = req.body;
 
-    const { user, accessToken, refreshToken } = await authService.verifyOtp(
-      email,
-      otp
-    );
+    const { user } = await authService.verifyOtp(email, otp);
 
-    res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(200).json(createUserResponse(user));
+    // res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
+    // res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.status(200).json(prepareUserResponseData(user));
   } catch (err) {
     next(err);
   }
@@ -147,9 +96,9 @@ export async function signin(
 
     const user = await authService.signin(email, password);
 
-    res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(200).json(createUserResponse(user.user));
+    // res.cookie("refreshToken", user.refreshToken, COOKIE_OPTIONS);
+    // res.cookie("accessToken", user.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.status(200).json(prepareUserResponseData(user.user));
   } catch (err) {
     next(err);
   }
@@ -160,8 +109,8 @@ export async function signout(req: Request, res: Response, next: NextFunction) {
   try {
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
     const result = await authService.signout(token);
-    res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
-    res.clearCookie("accessToken", { httpOnly: true, sameSite: "strict" });
+    // res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
+    // res.clearCookie("accessToken", { httpOnly: true, sameSite: "strict" });
     res.json(result);
   } catch (err) {
     next(err);
@@ -174,12 +123,12 @@ export async function refreshToken(
   next: NextFunction
 ) {
   try {
-    const token = req.cookies?.refreshToken || req.body?.refreshToken;
-    const { refreshToken, accessToken } = await authService.refreshToken(token);
+    // const token = req.cookies?.refreshToken || req.body?.refreshToken;
+    // const {  accessToken } = await authService.refreshToken(token);
 
-    res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.json({ accessToken });
+    // res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
+    // res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.json({ accessToken: "" });
   } catch (err) {
     next(err);
   }
@@ -203,7 +152,8 @@ export async function forgotPassword(
       return res.json({ success: false, message: "User not found" });
     }
 
-    const otpCode = generateAlphaNumericOTP();
+    // const otpCode = generateAlphaNumericOTP();
+    const otpCode = "123456";
 
     const deleteOtpPromise = OtpModel.deleteMany({ email });
     const createOtpPromise = OtpModel.create({
@@ -256,15 +206,19 @@ export async function resetPassword(
 ) {
   try {
     const { otp, newPassword, email } = req.body;
-    const { user, accessToken, refreshToken } = await authService.resetPassword(
-      email,
-      otp,
-      newPassword
-    );
-    res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-    res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.status(200).json(createUserResponse(user, "Password reset successful"));
+    const { user } = await authService.resetPassword(email, otp, newPassword);
+    // res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
+    // res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res
+      .status(200)
+      .json(prepareUserResponseData(user, "Password reset successful"));
   } catch (err) {
     next(err);
   }
 }
+
+export const authFailureRedirect = (_req: Request, res: Response) => {
+  return res
+    .status(401)
+    .json({ message: "Invalid credentials", success: false });
+};

@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "../models/user.model";
-import { AuthRequest } from "../types/type";
 import { UsersService } from "../services/users-service/users-service";
+import { AuthRequest } from "../types/type";
+import { prepareUserResponseData } from "../utils/prepare-user-response-data";
 
 const usersService = new UsersService();
 
@@ -49,7 +50,7 @@ export const myProfile = async (
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
       return res
@@ -57,7 +58,7 @@ export const myProfile = async (
         .json({ success: false, message: "User not found" });
     }
 
-    res.json({ success: true, user });
+    res.json({ success: true, user: prepareUserResponseData(user) });
   } catch (error) {
     next(error);
   }

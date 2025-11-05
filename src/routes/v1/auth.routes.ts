@@ -1,37 +1,40 @@
 import express from "express";
-import { authMiddleware, authorize } from "../../middlewares/auth.middleware";
+import { authorize, isAuthenticated } from "../../middlewares/auth.middleware";
 import * as usersController from "../../controllers/users.controller";
-import {
-  validateData,
-  ValidationSource,
-} from "../../middlewares/validate.middleware";
+import { validateData } from "../../middlewares/validate.middleware";
 import {
   SigninSchema,
   SignupSchema,
   VerifyOTPSchema,
 } from "../../validators/auth.validators";
 import * as authController from "../../controllers/auth.controller";
+import passport from "passport";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, authorize("admin"), usersController.getUsers);
+router.get("/", isAuthenticated, authorize("admin"), usersController.getUsers);
 //Authentication
 // /api/v1/auth/
+
 router.post(
   "/signup",
-  validateData(SignupSchema, ValidationSource.BODY),
+  validateData({ body: SignupSchema }),
   authController.signup
 );
 
 router.post(
   "/signin",
-  validateData(SigninSchema, ValidationSource.BODY),
+  passport.authenticate("local", {
+    successRedirect: "/api/v1/users/profile",
+    failureRedirect: "/api/v1/auth/auth-failure",
+  }),
+  validateData({ body: SigninSchema }),
   authController.signin
 );
 
 router.post(
   "/verify-signup-otp",
-  validateData(VerifyOTPSchema, ValidationSource.BODY),
+  validateData({ body: VerifyOTPSchema }),
   authController.verifyOTP
 );
 
@@ -47,9 +50,11 @@ router.post("/reset-password", authController.resetPassword);
 
 router.get(
   "/profile",
-  authMiddleware,
+  isAuthenticated,
   authorize("admin", "user"),
   usersController.myProfile
 );
+
+router.get("/auth-failure", authController.authFailureRedirect);
 
 export default router;

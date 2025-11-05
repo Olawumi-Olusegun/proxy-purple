@@ -1,18 +1,30 @@
 import { NextFunction, Request, Response } from "express";
 import * as z from "zod";
 
-export enum ValidationSource {
-  BODY = "body",
-  PARAMS = "params",
-  QUERY = "query",
-  HEADERS = "headers",
-}
+type validationOptions = {
+  body?: z.ZodSchema;
+  params?: z.ZodSchema;
+  query?: z.ZodSchema;
+};
 
-export function validateData(schemas: z.ZodSchema, source: ValidationSource) {
+export function validateData(schema: validationOptions) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = schemas.parse(req[source]);
-      Object.assign(req[source], parsed);
+      if (schema.body) {
+        const validatedBody = schema.body.parse(req.body);
+        req.body = validatedBody as Request["body"];
+      }
+
+      if (schema.params) {
+        const validatedParams = schema.params.parse(req.params);
+        req.params = validatedParams as Request["params"];
+      }
+
+      if (schema.query) {
+        const validatedQuery = schema.query.parse(req.query);
+        req.query = validatedQuery as Request["query"];
+      }
+
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
