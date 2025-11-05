@@ -13,11 +13,10 @@ Deployed API Endpoint
 
 ```
   /api/v1/auth/signup
-  /api/v1/auth/signup/verify
   /api/v1/auth/signin
   /api/v1/auth/signout
   /api/v1/auth/forgot-password
-  /api/v1/auth/forgot-password/verify
+  /api/v1/auth//verify-forgot-password-otp
   /api/v1/auth/reset-password
 ```
 
@@ -59,6 +58,8 @@ password: string (required)
 ```
 
 `/auth/signout` => `POST` => Log out a user and invalidate the session or token.
+
+
 `/auth/forgot-password` => `POST` => Initiate a password reset by sending an OTP to the user’s email.
 
 ```
@@ -85,8 +86,9 @@ otp: string (exactly 6 digits)
 ```
 
 {
-token: string (required),
+otp: string (required),
 newPassword: string (min 8 chars)
+email: "johndoe@mail.com
 }
 
 ```
