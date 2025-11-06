@@ -93,6 +93,12 @@ email: "johndoe@mail.com
 
 ```
 
+`/auth/resend-otp` => `POST` => Resend OTP.
+
+{
+email: string (valid email),
+}
+
 
 ```
 
