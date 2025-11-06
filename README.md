@@ -26,8 +26,6 @@ All endpoints listed below are prefixed with this base path.
 
 `/auth/signup` => `POST` => Register a new user and send a verification OTP to their email.
 
-```
-
 {
 email: string (valid email),
 password: string (min 8 chars),
@@ -35,9 +33,9 @@ password: string (min 8 chars),
 
 ```
 
-`/auth/verify-signup-otp` => `POST` => Verify the OTP sent to the user’s email after signup.
-
 ```
+
+`/auth/verify-signup-otp` => `POST` => Verify the OTP sent to the user’s email after signup.
 
 {
 email: string (valid email),
@@ -46,9 +44,9 @@ otp: string (exactly 6 digits)
 
 ```
 
-`/auth/signin` => `POST` => Log in a user and return authentication data (token or session).
-
 ```
+
+`/auth/signin` => `POST` => Log in a user and return authentication data (token or session).
 
 {
 email: string (valid email),
@@ -57,12 +55,11 @@ password: string (required)
 
 ```
 
+```
 `/auth/signout` => `POST` => Log out a user and invalidate the session or token.
 
 
 `/auth/forgot-password` => `POST` => Initiate a password reset by sending an OTP to the user’s email.
-
-```
 
 {
 email: string (valid email)
@@ -70,9 +67,9 @@ email: string (valid email)
 
 ```
 
-`/auth/verify-forgot-password-otp` => `POST` => Verify the OTP sent for password reset.
-
 ```
+
+`/auth/verify-forgot-password-otp` => `POST` => Verify the OTP sent for password reset.
 
 {
 email: string (valid email),
@@ -81,9 +78,8 @@ otp: string (exactly 6 digits)
 
 ```
 
-`/auth/reset-password` => `POST` => Reset the user’s password after successful OTP verification.
-
 ```
+`/auth/reset-password` => `POST` => Reset the user’s password after successful OTP verification.
 
 {
 otp: string (required),
@@ -93,6 +89,7 @@ email: "johndoe@mail.com
 
 ```
 
+```
 `/auth/resend-otp` => `POST` => Resend OTP.
 
 {
