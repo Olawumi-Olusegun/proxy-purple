@@ -46,6 +46,16 @@ otp: string (exactly 6 digits)
 
 ```
 
+`/auth/resend-otp` => `POST` => Resend OTP.
+
+```
+
+{
+email: string (valid email),
+}
+
+```
+
 `/auth/signin` => `POST` => Log in a user and return authentication data (token or session).
 
 ```

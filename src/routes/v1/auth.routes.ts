@@ -3,6 +3,7 @@ import { authorize, isAuthenticated } from "../../middlewares/auth.middleware";
 import * as usersController from "../../controllers/users.controller";
 import { validateData } from "../../middlewares/validate.middleware";
 import {
+  ForgotPasswordSchema,
   SigninSchema,
   SignupSchema,
   VerifyOTPSchema,
@@ -53,6 +54,12 @@ router.get(
   isAuthenticated,
   authorize("admin", "user"),
   usersController.myProfile
+);
+
+router.post(
+  "/resend-otp",
+  validateData({ body: ForgotPasswordSchema }),
+  authController.resendOTP
 );
 
 router.get("/auth-failure", authController.authFailureRedirect);

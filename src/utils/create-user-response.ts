@@ -18,7 +18,7 @@ interface UserResponse {
 }
 
 export const createUserResponse = (
-  user: any,
+  user: UserResponse["user"],
   message?: string
 ): UserResponse => {
   return {

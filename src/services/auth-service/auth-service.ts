@@ -338,6 +338,32 @@ export class AuthService {
     }
   }
 
+  async resendOtp(email: string) {
+    if (!email) {
+      throw new HttpError("Invalid credentials", 400);
+    }
+
+    try {
+      const userExist = await User.findOne({ email });
+
+      if (!userExist) {
+        throw new HttpError("User not found", 404);
+      }
+
+      await OtpModel.deleteMany({ email });
+      await this.createOtpRecord(email);
+
+      console.log("OTP for resend password:");
+
+      // Try sending OTP email before user creation
+      // await sendOtpEmailWithResend(email, otpRecord.otp);
+
+      return userExist;
+    } catch {
+      throw new HttpError("Failed to delete user", 500);
+    }
+  }
+
   // CREATE OTP RECORD IN DATABASE
   private async createOtpRecord(email: string) {
     try {

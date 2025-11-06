@@ -217,6 +217,20 @@ export async function resetPassword(
   }
 }
 
+export const resendOTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = req.body;
+  try {
+    authService.resendOtp(email);
+    res.json({ success: true, message: "OTP sent successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const authFailureRedirect = (_req: Request, res: Response) => {
   return res
     .status(401)
