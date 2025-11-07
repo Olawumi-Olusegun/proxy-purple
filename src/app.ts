@@ -16,6 +16,7 @@ import path from "path";
 import config from "./config";
 import { gracefulShutdown } from "./database/dbConnection";
 import { User } from "./models/user.model";
+import MongoStore from "connect-mongo";
 
 process.on("uncaughtException", (err: Error) => {
   return gracefulShutdown(err, "uncaughtException");
@@ -47,7 +48,17 @@ app.use(
     secret: config.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 day
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      secure: config.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+    },
+    store: MongoStore.create({
+      mongoUrl: config.MONGO_URI,
+      collectionName: "sessions",
+      ttl: 60 * 60 * 24, // 1 day in seconds
+    }),
   })
 );
 
@@ -122,14 +133,15 @@ passport.use(
         }
 
         const userData: Express.User = {
-          id: existingUser._id.toString() as string,
-          userId: existingUser._id.toString() as string,
+          id: existingUser._id.toString(),
+          userId: existingUser._id.toString(),
           email: existingUser.email,
           role: existingUser.role as string,
         };
 
-        done(null, userData);
+        return done(null, userData);
       } catch (error) {
+        console.error("Strategy error:", error);
         done(error);
       }
     }

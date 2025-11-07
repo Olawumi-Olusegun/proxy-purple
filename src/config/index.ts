@@ -7,6 +7,7 @@ export const env = envSchema.parse(process.env);
 
 export default {
   PORT: env.PORT,
+  NODE_ENV: env.NODE_ENV,
   MONGO_URI: env.MONGO_URI,
   jwt: {
     JWT_ACCESS_SECRET: env.JWT_ACCESS_SECRET,
