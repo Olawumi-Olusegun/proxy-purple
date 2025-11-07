@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { authorize, isAuthenticated } from "../../middlewares/auth.middleware";
 import * as usersController from "../../controllers/users.controller";
 import { validateData } from "../../middlewares/validate.middleware";
@@ -25,12 +25,29 @@ router.post(
 
 router.post(
   "/signin",
-  passport.authenticate("local", {
-    successRedirect: "/api/v1/users/profile",
-    failureRedirect: "/api/v1/auth/auth-failure",
-  }),
   validateData({ body: SigninSchema }),
-  authController.signin
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate(
+      "local",
+      (
+        err: Error | null,
+        user: Express.User | false | null,
+        info?: { message?: string }
+      ) => {
+        if (err) return next(err);
+        if (!user) {
+          return res.status(401).json({
+            message: info?.message || "Invalid email or password",
+          });
+        }
+
+        req.logIn(user, (loginErr: Error | null) => {
+          if (loginErr) return next(loginErr);
+          return authController.signin(req, res, next);
+        });
+      }
+    )(req, res, next);
+  }
 );
 
 router.post(
@@ -39,7 +56,18 @@ router.post(
   authController.verifyOTP
 );
 
-router.post("/signout", authController.signout);
+router.post("/signout", (req: Request, res: Response, next: NextFunction) => {
+  req.logout((err) => {
+    if (err) return next(err);
+
+    req.session.destroy(() => {
+      res.clearCookie("connect.sid");
+      res
+        .status(200)
+        .json({ message: "Logged out successfully", success: true });
+    });
+  });
+});
 
 router.post("/forgot-password", authController.forgotPassword);
 router.post(
