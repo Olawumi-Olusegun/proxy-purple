@@ -32,20 +32,19 @@ export async function requireAuth(
 ) {
   try {
     const header = req.headers.authorization;
-    if (!header)
-      return res.status(401).json({ error: "No authorization header" });
+    if (!header) return res.status(401).json({ error: "Invalid credentials" });
     const token = header.split(" ")[1];
     const { userId, email, role } = verifyAccessToken(token) as jwt.JwtPayload &
       Payload;
 
     if (!userId || !email || !role) {
-      return res.status(401).json({ error: "Invalid or expired token" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     if (!req?.user) {
       return res
         .status(401)
-        .json({ message: "User not authenticated", success: false });
+        .json({ message: "Invalid credentials", success: false });
     }
 
     req.user.email = email;
@@ -100,7 +99,7 @@ export const authMiddleware = async (
     if (!req.user) {
       return res
         .status(401)
-        .json({ message: "User not authenticated", success: false });
+        .json({ message: "Invalid credentials", success: false });
     }
 
     req.user.id = user._id.toString();
@@ -123,7 +122,7 @@ const handleRefresh = async (
   // Get refreshToken from cookie header
   const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) {
-    return res.status(401).json({ message: "Missing refresh token" });
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
   try {
@@ -135,7 +134,7 @@ const handleRefresh = async (
 
     // CHeck if payload is valid
     if (!payload.userId || !payload.email) {
-      return res.status(401).json({ message: "Invalid refresh token" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Check refresh token exists in Database
@@ -146,12 +145,12 @@ const handleRefresh = async (
 
     // Return if no token
     if (!tokenExist) {
-      return res.status(401).json({ message: "Invalid refresh token" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Return if token in the database does not match the cookie token
     if (tokenExist.refreshToken !== refreshToken) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+      return res.status(403).json({ message: "Invalid credentials" });
     }
 
     // Implement token Rotation: Issue new access token
@@ -192,7 +191,7 @@ const handleRefresh = async (
     }
     return res
       .status(401)
-      .json({ message: "Refresh token expired/invalid", success: false });
+      .json({ message: "Invalid credentials", success: false });
   }
 };
 
@@ -201,9 +200,7 @@ export const authorize = (...allowedRoles: string[]) => {
     const userRole = req.user?.role;
 
     if (!userRole) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized", success: false });
+      return res.status(403).json({ message: "Unauthorized", success: false });
     }
 
     if (!allowedRoles.includes(userRole)) {

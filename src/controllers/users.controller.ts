@@ -27,7 +27,9 @@ export const deleteUser = async (
   const userId = req.params.userId;
 
   if (userId) {
-    return res.status(400).json({ success: false, message: "Invalid user ID" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid credentials" });
   }
 
   try {

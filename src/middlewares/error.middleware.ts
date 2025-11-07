@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import logger from "../utils/logger";
 import { HttpError } from "../utils/http-error";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export default function errorMiddleware(
-  err: any,
+  err: Error,
   _req: Request,
   res: Response,
   _next: NextFunction

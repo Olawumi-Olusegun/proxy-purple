@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { sendResetPasswordOtp } from "../services/email.service";
+// import { sendResetPasswordOtp } from "../services/email.service";
 import { User } from "../models/user.model";
 import { AuthService } from "../services/auth-service/auth-service";
 // import { generateAlphaNumericOTP } from "../utils/generateOTP";
@@ -35,7 +35,7 @@ export async function googleAuth(
   try {
     const { idToken } = req.body;
     if (!idToken) {
-      return res.status(400).json({ message: "No Google ID token" });
+      return res.status(400).json({ message: "No token" });
     }
 
     const user = await authService.googleAuth(idToken);
@@ -149,7 +149,7 @@ export async function forgotPassword(
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.json({ success: false, message: "User not found" });
+      return res.json({ success: false, message: "Invalid credentials" });
     }
 
     // const otpCode = generateAlphaNumericOTP();
@@ -165,7 +165,7 @@ export async function forgotPassword(
     await Promise.all([deleteOtpPromise, createOtpPromise]);
 
     try {
-      await sendResetPasswordOtp(email, otpCode);
+      // await sendResetPasswordOtp(email, otpCode);
     } catch (emailErr) {
       console.error("Failed to send reset email", emailErr);
       return res.status(500).json({

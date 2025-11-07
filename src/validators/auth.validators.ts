@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const MailSchema = z.email("Invalid email address");
+const MailSchema = z.email("Invalid email and or password");
 
 const SignupSchema = z.object({
   email: MailSchema,
